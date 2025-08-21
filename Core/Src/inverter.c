@@ -82,18 +82,6 @@ static void Inverter_ProcessAnalogInputs(void)
 	}
 	else { HAL_GPIO_WritePin(GPIOB, LD1_Pin, SET); }
 
-	// get adc inputs for apps
-
-	// check apps plausibility
-
-	// get adc inputs for brakes
-
-	// check apps + brakes plausibility
-
-	// if all g, continue with torque request
-
-	// if not, disable inverter
-
 //	if (torqueCommand == prevTorqueCommand) { return; }
 //	else {
 //		prevTorqueCommand = torqueCommand;
