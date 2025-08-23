@@ -23,7 +23,7 @@
 /* Private macro -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-static uint16_t torqueCommand = 0;
+static uint16_t torqueCommand = 400;
 static uint16_t prevTorqueCommand = 0;
 static uint8_t InverterActive = 0;
 
@@ -52,11 +52,11 @@ void Inverter_Init(void)
 
   /* Send initial disable message to ensure inverter is off */
   Inverter_DisableInverter();
-  HAL_Delay(10);
+  HAL_Delay(100);
   Inverter_ClearInverterFaults();
-  HAL_Delay(10);
+  HAL_Delay(100);
   Inverter_EnableInverter();
-  HAL_Delay(10);
+  HAL_Delay(100);
 }
 
 /**
@@ -82,23 +82,11 @@ static void Inverter_ProcessAnalogInputs(void)
 	}
 	else { HAL_GPIO_WritePin(GPIOB, LD1_Pin, SET); }
 
-	// get adc inputs for apps
-
-	// check apps plausibility
-
-	// get adc inputs for brakes
-
-	// check apps + brakes plausibility
-
-	// if all g, continue with torque request
-
-	// if not, disable inverter
-
-//	if (torqueCommand == prevTorqueCommand) { return; }
-//	else {
-//		prevTorqueCommand = torqueCommand;
-		Inverter_TransmitCANMessage(torqueCommand, Inverter_DIRECTION_FORWARD, Inverter_INVERTER_ENABLE);
-//	}
+	if (torqueCommand == prevTorqueCommand) { return; }
+	else {
+	Inverter_TransmitCANMessage(torqueCommand, Inverter_DIRECTION_FORWARD, Inverter_INVERTER_ENABLE);
+		prevTorqueCommand = torqueCommand;
+	}
 }
 
 /**

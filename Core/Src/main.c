@@ -142,7 +142,6 @@ int main(void)
   HAL_CAN_Start(&hcan1);
   Inverter_Init();
 
-
   /* USER CODE END 2 */
 
   /* Infinite loop */

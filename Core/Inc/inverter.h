@@ -35,8 +35,8 @@ void Inverter_ClearInverterFaults(void);
 #define Inverter_INVERTER_CLEAR_ID 0x0C1
 
 /* Control bytes */
-#define Inverter_DIRECTION_FORWARD 0x00
-#define Inverter_DIRECTION_REVERSE 0x01
+#define Inverter_DIRECTION_FORWARD 0x01
+#define Inverter_DIRECTION_REVERSE 0x00
 #define Inverter_INVERTER_ENABLE  0x01
 #define Inverter_INVERTER_DISABLE 0x00
 
