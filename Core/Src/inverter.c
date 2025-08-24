@@ -101,10 +101,10 @@ static void Inverter_ProcessAnalogInputs(void)
 
 	if (currentState != prevState) {
 		if (currentState == 1) {
-			Inverter_TransmitCANMessage(400, Inverter_DIRECTION_REVERSE, Inverter_INVERTER_ENABLE);
+			Inverter_TransmitCANMessage(400, Inverter_DIRECTION_FORWARD, Inverter_INVERTER_ENABLE);
 		}
 		else {
-			Inverter_TransmitCANMessage(0, Inverter_DIRECTION_REVERSE, Inverter_INVERTER_DISABLE);
+			Inverter_TransmitCANMessage(0, Inverter_DIRECTION_FORWARD, Inverter_INVERTER_DISABLE);
 		}
 		prevState = currentState;
 	}

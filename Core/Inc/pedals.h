@@ -11,7 +11,6 @@
 #include "main.h"
 
 void calibratePedals(void);
-
 void pedalCapture(void);
 
 #endif /* INC_PEDALS_H_ */

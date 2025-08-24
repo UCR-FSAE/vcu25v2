@@ -154,24 +154,25 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_CAN_Start(&hcan1);
   Inverter_Init();
-
+  calibratePedals();
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
-  calibratePedals();
-
-
 	while (1) {
-		pedalCapture();
-		// sends torque commands to the inverter
-		Inverter_Process();
-		/* USER CODE END WHILE */
+	    static uint32_t lastExecutionTime = 0;
+	    uint32_t currentTime = HAL_GetTick();
 
+	    if (currentTime - lastExecutionTime >= 1000) {
+			pedalCapture();
+			// sends torque commands to the inverter
+			Inverter_Process();
+			lastExecutionTime = currentTime;
+	    }
+		/* USER CODE END WHILE */
+	}
 		/* USER CODE BEGIN 3 */
-		}
 	/* USER CODE END 3 */
 }
 

@@ -8,13 +8,13 @@
 #include "pedals.h"
 
 // variables
-static uint32_t appsRaw1 = 0;
-static uint32_t appsRaw1Max = 0;
-static uint32_t appsRaw1Min = 4096;
+uint32_t appsRaw1 = 0;
+uint32_t appsRaw1Max = 0;
+uint32_t appsRaw1Min = 4096;
 
-static uint32_t appsRaw2 = 0;
-static uint32_t appsRaw2Max = 0;
-static uint32_t appsRaw2Min = 4096;
+uint32_t appsRaw2 = 0;
+uint32_t appsRaw2Max = 0;
+uint32_t appsRaw2Min = 4096;
 
 extern volatile float global_accel_position;
 float appsConverted1 = 0.0f;
