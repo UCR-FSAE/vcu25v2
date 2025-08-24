@@ -27,14 +27,21 @@ static uint16_t torqueCommand = 0;
 static uint16_t prevTorqueCommand = 0;
 static uint8_t InverterActive = 0;
 
+
+static uint8_t prevState = 0;
+uint8_t currentState;
+
 float pedal_table[NUM_POINTS] = {0.15f, 0.35f, 0.5f, 0.65f, 0.75f, 0.95f};
 uint16_t torque_table[NUM_POINTS] = {0, 100, 200, 300, 350, 400};
 
 
 /* External variables --------------------------------------------------------*/
+extern ADC_HandleTypeDef hadc1;
 extern ADC_HandleTypeDef hadc3;
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
+
+extern volatile float global_accel_position;
 
 /* Private function prototypes -----------------------------------------------*/
 static void Inverter_ProcessAnalogInputs(void);
@@ -82,11 +89,27 @@ static void Inverter_ProcessAnalogInputs(void)
 	}
 	else { HAL_GPIO_WritePin(GPIOB, LD1_Pin, SET); }
 
-//	if (torqueCommand == prevTorqueCommand) { return; }
-//	else {
-//		prevTorqueCommand = torqueCommand;
-		Inverter_TransmitCANMessage(torqueCommand, Inverter_DIRECTION_FORWARD, Inverter_INVERTER_ENABLE);
-//	}
+
+	if (global_accel_position >= 0.8) {
+		currentState = 1;
+	}
+	else if (global_accel_position <= 0.3){
+		currentState = 0;
+	}
+	else {
+		currentState = prevState;
+	}
+
+
+	if (currentState != prevState) {
+		if (currentState == 1) {
+			Inverter_TransmitCANMessage(600, Inverter_DIRECTION_FORWARD, Inverter_INVERTER_ENABLE);
+		}
+		else {
+			Inverter_TransmitCANMessage(0, Inverter_DIRECTION_FORWARD, Inverter_INVERTER_DISABLE);
+		}
+		prevState = currentState;
+	}
 }
 
 /**
