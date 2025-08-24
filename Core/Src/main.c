@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "inverter.h"
+#include "pedals.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -77,25 +78,13 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
 // includes variables used for raw adc collection as well as variables for capturing calibration adc values
-static uint32_t appsRaw1 = 0;
-static uint32_t appsRaw1Max = 0;
-static uint32_t appsRaw1Min = 4096;
 
-static uint32_t appsRaw2 = 0;
-static uint32_t appsRaw2Max = 0;
-static uint32_t appsRaw2Min = 4096;
+//static uint32_t bseRaw = 0;
+//static uint32_t bseRawMax = 0;
+//static uint32_t bseRawMin = 4096;
 
 volatile float global_accel_position = 0.0f;
-volatile float appsConverted1 = 0.0f;
-volatile float appsConverted2 = 0.0f;
 
-static uint32_t bseRaw = 0;
-static uint32_t bseRawMax = 0;
-static uint32_t bseRawMin = 4096;
-
-// temporary variables used in the calibration phase
-static int v1;
-static int v2;
 
 // calculated percentage values
 static uint32_t appsPercentage = 0;
@@ -172,143 +161,11 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-    // Calibration
-	HAL_GPIO_WritePin(GPIOB, LD1_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOB, LD2_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(GPIOB, LD3_Pin, GPIO_PIN_RESET);
-
-	// begin max calibration
-	HAL_GPIO_WritePin(GPIOB, LD2_Pin, GPIO_PIN_SET);
-
-	uint32_t t0 = HAL_GetTick(); // ms since power-up
-	// for 3000 ms (3s) window
-	while (HAL_GetTick() - t0 < 3000) {
-		HAL_ADC_Stop(&hadc1);
-		if (HAL_ADC_Start(&hadc1) != HAL_OK) {
-			Error_Handler();
-		}
-
-		if (HAL_ADC_PollForConversion(&hadc1, 10) == HAL_OK) {
-			v1 = HAL_ADC_GetValue(&hadc1); v2 = HAL_ADC_GetValue(&hadc1); // get values for adc channels 5 and 6 in succession
-			if (v1 > appsRaw1Max) appsRaw1Max = v1;
-			if (v2 > appsRaw2Max) appsRaw2Max = v2;
-		}
-		else {
-			v1 = 0; v2 = 0; HAL_ADC_Stop(&hadc1);
-		}
-		HAL_Delay(10);
-	}
-
-	// send begin min calibraion
-    HAL_GPIO_WritePin(GPIOB, LD2_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(GPIOB, LD3_Pin, GPIO_PIN_SET);
-
-	t0 = HAL_GetTick();
-	while (HAL_GetTick() - t0 < 3000) {
-		HAL_ADC_Stop(&hadc1);
-
-		if (HAL_ADC_Start(&hadc1) != HAL_OK) { Error_Handler(); }
-
-		if (HAL_ADC_PollForConversion(&hadc1, 10) == HAL_OK) {
-
-			v1 = HAL_ADC_GetValue(&hadc1); v2 = HAL_ADC_GetValue(&hadc1); // get values for adc channels 5 and 6 in succession
-			if (v1 < appsRaw1Min) appsRaw1Min = v1;
-			if (v2 < appsRaw2Min) appsRaw2Min = v2;
-		}
-		else {
-			v1 = 0; v2 = 0; HAL_ADC_Stop(&hadc1);
-		}
-		HAL_Delay(10);
-	}
-
-    HAL_GPIO_WritePin(GPIOB, LD3_Pin, GPIO_PIN_RESET);
-
-    // begin BSE calibration
-	// begin max calibration
-//    HAL_GPIO_WritePin(GPIOB, LD1_Pin, GPIO_PIN_SET);
-//	HAL_GPIO_WritePin(GPIOB, LD2_Pin, GPIO_PIN_SET);
-//
-//	t0 = HAL_GetTick(); // ms since power-up
-//	// for 3000 ms (3s) window
-//	while (HAL_GetTick() - t0 < 3000) {
-//		HAL_ADC_Stop(&hadc2);
-//		if (HAL_ADC_Start(&hadc2) != HAL_OK) {
-//			Error_Handler();
-//		}
-//
-//		if (HAL_ADC_PollForConversion(&hadc2, 10) == HAL_OK) {
-//			v1 = HAL_ADC_GetValue(&hadc1); // only one channel being used here
-//			if (v1 > bseRawMax) { bseRawMax = v1; }
-//		}
-//		else {
-//			v1 = 0; HAL_ADC_Stop(&hadc2);
-//		}
-//		HAL_Delay(10);
-//	}
-//
-//	// send begin min calibraion
-//    HAL_GPIO_WritePin(GPIOB, LD2_Pin, GPIO_PIN_RESET);
-//    HAL_GPIO_WritePin(GPIOB, LD3_Pin, GPIO_PIN_SET);
-//
-//	t0 = HAL_GetTick();
-//	while (HAL_GetTick() - t0 < 3000) {
-//		HAL_ADC_Stop(&hadc2);
-//
-//		if (HAL_ADC_Start(&hadc2) != HAL_OK) { Error_Handler(); }
-//
-//		if (HAL_ADC_PollForConversion(&hadc2, 10) == HAL_OK) {
-//
-//			v1 = HAL_ADC_GetValue(&hadc2); // only one channel being used here
-//			if (v1 < bseRawMin) { bseRawMin = v1; }
-//		}
-//		else {
-//			v1 = 0; HAL_ADC_Stop(&hadc1);
-//		}
-//		HAL_Delay(10);
-//	}
-//	HAL_GPIO_WritePin(GPIOB, LD1_Pin, GPIO_PIN_RESET);
-//    HAL_GPIO_WritePin(GPIOB, LD3_Pin, GPIO_PIN_RESET);
+  calibratePedals();
 
 
 	while (1) {
-		// captures BSE and APPS inputs
-
-		// APPS capture
-		if (HAL_ADC_Start(&hadc1) != HAL_OK) { Error_Handler(); }
-
-		if (HAL_ADC_PollForConversion(&hadc1, 10) == HAL_OK) {
-			appsRaw1 = HAL_ADC_GetValue(&hadc1);
-			appsRaw2 = HAL_ADC_GetValue(&hadc1);
-		}
-		else {
-			appsRaw1 = 0;
-			appsRaw2 = 0;
-			HAL_ADC_Stop(&hadc1);
-		}
-
-	    appsConverted1 = (float)(appsRaw1 - appsRaw1Min) / (float)(appsRaw1Max - appsRaw1Min);
-	    appsConverted2 = (float)(appsRaw2 - appsRaw2Min) / (float)(appsRaw2Max - appsRaw2Min);
-
-	    // Clamp to valid range (safety check)
-	    if (appsConverted1 < 0.0f) appsConverted1 = 0.0f;
-	    if (appsConverted1 > 1.0f) appsConverted1 = 0.0f;
-	    if (appsConverted2 < 0.0f) appsConverted2 = 0.0f;
-	    if (appsConverted2 > 1.0f) appsConverted2 = 0.0f;
-
-	    global_accel_position = (appsConverted1 + appsConverted2) / 2;
-
-		// BSE capture
-//		if (HAL_ADC_Start(&hadc2) != HAL_OK) { Error_Handler(); }
-//
-//		if (HAL_ADC_PollForConversion(&hadc2, 10) == HAL_OK) { bseRaw = HAL_ADC_GetValue(&hadc2); }
-//		else {
-//			bseRaw = 0;
-//			HAL_ADC_Stop(&hadc2);
-//		}
-
-		// convert to percentages
-
-
+		pedalCapture();
 		// sends torque commands to the inverter
 		Inverter_Process();
 		/* USER CODE END WHILE */
