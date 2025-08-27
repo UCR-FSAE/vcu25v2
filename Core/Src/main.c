@@ -84,7 +84,7 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 //static uint32_t bseRawMin = 4096;
 
 volatile float global_accel_position = 0.0f;
-
+uint32_t lastExecutionTime = 0;
 
 // calculated percentage values
 static uint32_t appsPercentage = 0;
@@ -160,19 +160,20 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	while (1) {
-	    static uint32_t lastExecutionTime = 0;
-	    uint32_t currentTime = HAL_GetTick();
 
-	    if (currentTime - lastExecutionTime >= 1000) {
+	while (1) {
+		int32_t currentTime = HAL_GetTick();
+		if (currentTime - lastExecutionTime >= 1000) {
 			pedalCapture();
 			// sends torque commands to the inverter
 			Inverter_Process();
 			lastExecutionTime = currentTime;
-	    }
+		}
+
 		/* USER CODE END WHILE */
-	}
+
 		/* USER CODE BEGIN 3 */
+	}
 	/* USER CODE END 3 */
 }
 
