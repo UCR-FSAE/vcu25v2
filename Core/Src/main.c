@@ -64,6 +64,7 @@ ETH_TxPacketConfig TxConfig;
 ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc2;
 ADC_HandleTypeDef hadc3;
+DMA_HandleTypeDef hdma_adc1;
 
 CAN_HandleTypeDef hcan1;
 CAN_HandleTypeDef hcan2;
@@ -79,22 +80,31 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 /* USER CODE BEGIN PV */
 // includes variables used for raw adc collection as well as variables for capturing calibration adc values
 
-//static uint32_t bseRaw = 0;
-//static uint32_t bseRawMax = 0;
-//static uint32_t bseRawMin = 4096;
-
 volatile float global_accel_position = 0.0f;
 uint32_t lastExecutionTime = 0;
 
-// calculated percentage values
-static uint32_t appsPercentage = 0;
-static uint32_t bsePercentage = 0;
+uint32_t appsRaw1 = 0;
+uint32_t appsRaw1Max = 0;
+uint32_t appsRaw1Min = 4096;
+
+uint32_t appsRaw2 = 0;
+uint32_t appsRaw2Max = 0;
+uint32_t appsRaw2Min = 4096;
+
+// temporary values for testing
+uint16_t rawValues[2];
+char ready;
+
+static float appsPercentage1 = 0.0f;
+static float appsPercentage2 = 0.0f;
+static float appsValue = 0.0f;
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_ETH_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_USART3_UART_Init(void);
@@ -110,6 +120,19 @@ static void MX_ADC3_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
+	appsRaw1 = rawValues[0];
+	appsRaw2 = rawValues[1];
+
+	appsPercentage1 = (float) (appsRaw1) / (float) (4095);
+	appsPercentage2 = (float) (appsRaw2) / (float) (4095);
+
+	appsValue = (appsPercentage1 + appsPercentage2) / 2;
+	global_accel_position = appsValue;
+	ready = 1;
+}
+
 
 /* USER CODE END 0 */
 
@@ -142,6 +165,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_ETH_Init();
   MX_I2C1_Init();
   MX_USART3_UART_Init();
@@ -154,27 +178,25 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_CAN_Start(&hcan1);
   Inverter_Init();
-  calibratePedals();
-
+//  calibratePedals();
+  HAL_Delay(1000);
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t *) rawValues, 2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
 	while (1) {
-		int32_t currentTime = HAL_GetTick();
-		if (currentTime - lastExecutionTime >= 1000) {
-			pedalCapture();
-			// sends torque commands to the inverter
+    /* USER CODE END WHILE */
+		if (ready == 1) {
 			Inverter_Process();
-			lastExecutionTime = currentTime;
+			ready = 0;
 		}
+		HAL_Delay(10);
 
-		/* USER CODE END WHILE */
-
-		/* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
 	}
-	/* USER CODE END 3 */
+  /* USER CODE END 3 */
 }
 
 /**
@@ -257,14 +279,14 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
-  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.ContinuousConvMode = ENABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc1.Init.NbrOfConversion = 2;
-  hadc1.Init.DMAContinuousRequests = DISABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.DMAContinuousRequests = ENABLE;
+  hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
   {
     Error_Handler();
@@ -274,7 +296,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_5;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_144CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -636,6 +658,22 @@ static void MX_USB_OTG_FS_PCD_Init(void)
   /* USER CODE BEGIN USB_OTG_FS_Init 2 */
 
   /* USER CODE END USB_OTG_FS_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
 
 }
 

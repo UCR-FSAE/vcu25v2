@@ -104,6 +104,41 @@ static void Inverter_ProcessAnalogInputs(void)
 	}
 }
 
+// temporary test version
+void Inverter_ProcessAnalogInputs1(float appsValue)
+{
+	/* Only process if Inverter is active */
+	// LD1 is active if the Inverter is active.
+	HAL_GPIO_WritePin(GPIOB, LD1_Pin, SET);
+//	if (!InverterActive) {
+//		HAL_GPIO_WritePin(GPIOB, LD1_Pin, RESET);
+//		return;
+//	}
+//	else { HAL_GPIO_WritePin(GPIOB, LD1_Pin, SET); }
+
+	if (appsValue >= 0 && appsValue < 0.15) {
+		torqueCommand = 0;
+	}
+	else if (appsValue > 0.15 && appsValue <= 0.35) {
+		torqueCommand = 100;
+	}
+	else if (appsValue > 0.35 && appsValue <= 0.65) {
+		torqueCommand = 200;
+	}
+	else if (appsValue > 0.65 && appsValue <= 0.8) {
+		torqueCommand = 300;
+	}
+	else if (appsValue > 0.8) {
+		torqueCommand = 400;
+	}
+
+	if (torqueCommand != prevTorqueCommand) {
+		if (torqueCommand == 0) { Inverter_TransmitCANMessage(0, Inverter_DIRECTION_FORWARD, Inverter_INVERTER_DISABLE); }
+		else { Inverter_TransmitCANMessage(torqueCommand, Inverter_DIRECTION_FORWARD, Inverter_INVERTER_ENABLE); }
+		prevTorqueCommand = torqueCommand;
+	}
+}
+
 /**
   * @brief  Transmit CAN message to inverter
   * @param  torque: Torque command value (0-32767)

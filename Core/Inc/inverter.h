@@ -29,6 +29,8 @@ void Inverter_EnableInverter(void);
 void Inverter_DisableInverter(void);
 void Inverter_ClearInverterFaults(void);
 
+void Inverter_ProcessAnalogInputs1(float appsValue);
+
 /* Private defines -----------------------------------------------------------*/
 /* CAN message IDs */
 #define Inverter_INVERTER_COMMAND_ID 0x0C0
