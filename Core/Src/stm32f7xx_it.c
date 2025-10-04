@@ -220,11 +220,18 @@ void TIM6_DAC_IRQHandler(void)
 void DMA2_Stream0_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA2_Stream0_IRQn 0 */
-
+  // Add delay before DMA processing
+  volatile uint32_t delay_count = 0;
+  for(uint32_t i = 0; i < 50000; i++) {
+    delay_count++;
+  }
   /* USER CODE END DMA2_Stream0_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_adc1);
   /* USER CODE BEGIN DMA2_Stream0_IRQn 1 */
-
+  // Add delay after DMA processing
+  for(uint32_t i = 0; i < 50000; i++) {
+    delay_count++;
+  }
   /* USER CODE END DMA2_Stream0_IRQn 1 */
 }
 

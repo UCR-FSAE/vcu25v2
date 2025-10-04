@@ -28,6 +28,7 @@ void Inverter_Process(void);
 void Inverter_EnableInverter(void);
 void Inverter_DisableInverter(void);
 void Inverter_ClearInverterFaults(void);
+void Inverter_TransmitCANMessage(void);
 
 void Inverter_ProcessAnalogInputs1(float appsValue);
 

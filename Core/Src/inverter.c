@@ -81,27 +81,29 @@ static void Inverter_ProcessAnalogInputs(void)
 	}
 	else { HAL_GPIO_WritePin(GPIOB, LD1_Pin, SET); }
 
-	if (global_accel_position >= 0 && global_accel_position < 0.15) {
-		torqueCommand = 0;
-	}
-	else if (global_accel_position > 0.15 && global_accel_position <= 0.35) {
-		torqueCommand = 100;
-	}
-	else if (global_accel_position > 0.35 && global_accel_position <= 0.65) {
-		torqueCommand = 200;
-	}
-	else if (global_accel_position > 0.65 && global_accel_position <= 0.8) {
-		torqueCommand = 300;
-	}
-	else if (global_accel_position > 0.8) {
+//	if (global_accel_position >= 0 && global_accel_position < 0.15) {
+//		torqueCommand = 0;
+//	}
+//	else if (global_accel_position > 0.15 && global_accel_position <= 0.35) {
+//		torqueCommand = 100;
+//	}
+//	else if (global_accel_position > 0.35 && global_accel_position <= 0.65) {
+//		torqueCommand = 200;
+//	}
+//	else if (global_accel_position > 0.65 && global_accel_position <= 0.8) {
+//		torqueCommand = 300;
+//	}
+//	else if (global_accel_position > 0.8) {
+//		torqueCommand = 400;
+//	}
+//
 		torqueCommand = 400;
-	}
-
-	if (torqueCommand != prevTorqueCommand) {
 		if (torqueCommand == 0) { Inverter_TransmitCANMessage(0, Inverter_DIRECTION_FORWARD, Inverter_INVERTER_DISABLE); }
 		else { Inverter_TransmitCANMessage(torqueCommand, Inverter_DIRECTION_FORWARD, Inverter_INVERTER_ENABLE); }
 		prevTorqueCommand = torqueCommand;
-	}
+//	}
+
+//	Inverter_TransmitCANMessage(400, Inverter_DIRECTION_FORWARD, Inverter_INVERTER_ENABLE);
 }
 
 // temporary test version
@@ -180,10 +182,10 @@ static void Inverter_TransmitCANMessage(uint16_t torque, uint8_t direction, uint
   /* Check if mailboxes are available */
   if (HAL_CAN_GetTxMailboxesFreeLevel(&hcan1) == 0) {
 	// toggles LD2 if there are no available mailboxes
-	HAL_GPIO_WritePin(GPIOB, LD2_Pin, RESET);
+//	HAL_GPIO_WritePin(GPIOB, LD2_Pin, RESET);
   }
   else {
-	HAL_GPIO_WritePin(GPIOB, LD2_Pin, SET);
+//	HAL_GPIO_WritePin(GPIOB, LD2_Pin, SET);
 
 	/* Send CAN message */
 	status = HAL_CAN_AddTxMessage(&hcan1, &txHeader, txData, &txMailbox);

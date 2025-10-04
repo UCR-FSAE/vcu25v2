@@ -122,15 +122,18 @@ static void MX_ADC3_Init(void);
 /* USER CODE BEGIN 0 */
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
-	appsRaw1 = rawValues[0];
-	appsRaw2 = rawValues[1];
+//	appsRaw1 = rawValues[0];
+//	appsRaw2 = rawValues[1];
+//
+//	appsPercentage1 = (float) (appsRaw1) / (float) (4095);
+//	appsPercentage2 = (float) (appsRaw2) / (float) (4095);
+//
+//	appsValue = (appsPercentage1 + appsPercentage2) / 2;
+//	global_accel_position = appsValue;
+//	ready = 1;
 
-	appsPercentage1 = (float) (appsRaw1) / (float) (4095);
-	appsPercentage2 = (float) (appsRaw2) / (float) (4095);
-
-	appsValue = (appsPercentage1 + appsPercentage2) / 2;
-	global_accel_position = appsValue;
-	ready = 1;
+//		HAL_GPIO_WritePin(GPIOB, LD1_Pin, SET);
+	Inverter_Process();
 }
 
 
@@ -178,7 +181,6 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_CAN_Start(&hcan1);
   Inverter_Init();
-//  calibratePedals();
   HAL_Delay(1000);
   HAL_ADC_Start_DMA(&hadc1, (uint32_t *) rawValues, 2);
   /* USER CODE END 2 */
@@ -188,11 +190,6 @@ int main(void)
 
 	while (1) {
     /* USER CODE END WHILE */
-		if (ready == 1) {
-			Inverter_Process();
-			ready = 0;
-		}
-		HAL_Delay(10);
 
     /* USER CODE BEGIN 3 */
 	}
@@ -296,7 +293,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_5;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_480CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
